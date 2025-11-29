@@ -1,6 +1,8 @@
 from datasets import load_dataset
 import re
 from collections import Counter
+import random as rd
+import numpy as np
 data = load_dataset("wikitext", "wikitext-2-raw-v1")
 train = data["train"]["text"]
 valid = data["validation"]["text"]
@@ -55,8 +57,8 @@ def tokenisation(sent):
     counts = [counter[word] for word in w2id]
     return list(w2id.keys()),w2id,id2w,counts
 
-#sent=sentences(corpus)
-#vocab,w2id,id2w,counts=tokenisation(sent)
+sent=sentences(corpus)
+vocab,w2id,id2w,counts=tokenisation(sent)
 
 def build_noise(count,alpha=0.75):
     noise= count**alpha
@@ -82,14 +84,38 @@ def pair(s,w,w2id):
             p.append((  w2id[s[word]] ,w2id[s[k]]   ))
     return p
 
-def pairs(sent,w):
+def filtre_s(s, w2id, freq_rel, t_s):
+    filtered = []
+    for w in s:
+        f = freq_rel[w2id[w]]          # fréquence relative du mot
+        P_drop = 1 - t_s/np.sqrt(f)  # proba de discard
+        
+        if rd.random() > P_drop:   # on garde le mot
+            filtered.append(w)
+
+    return filtered
+
+def pairs(sent,w,w2id,counts,t=1e-5):
     """On crée les pair (center,context) qui nous servent de données de training"""
     p=[]
+    total = sum(counts)
+    freq_rel = [c / total for c in counts]
+    t_s=np.sqrt(t)
     for s in sent:
-        p.extend(pair(s,w))
+        s_filt=filtre_s(s, w2id, freq_rel, t_s)
+        p.extend(pair(s_filt,w,w2id))
+    
     return p
 
-#print(pairs(sent,2)[:5])
+total = sum(counts)
+f_rel = [c / total for c in counts]
+for w in ['valkyria', 'chronicles', 'iii', 'senj', 'no', 'valkyria', 'unrecorded', 'chronicles', 'japanese', 'lit']:
+    f = f_rel[w2id[w]]
+    print(counts[w2id[w]])
+    print(w, f, "P_drop =", 1 - np.sqrt(1e-5 / f))
+
+print(pairs(sent,2,w2id,counts)[:10])
+print(sent[0])
 
 
 
