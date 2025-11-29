@@ -1,5 +1,6 @@
 from datasets import load_dataset
 import re
+from collections import Counter
 data = load_dataset("wikitext", "wikitext-2-raw-v1")
 train = data["train"]["text"]
 valid = data["validation"]["text"]
@@ -42,21 +43,27 @@ def tokenisation(sent):
     w2id={}
     id2w={}
     i=0
+    counter=Counter()
     for s in sent:
+        counter.update(s)
         for word in s:
             if word not in token:
                 token.add(word)
                 w2id[word]=i
                 id2w[i]=word
                 i=i+1
-    return list(w2id.keys()),w2id,id2w
+    counts = [counter[word] for word in w2id]
+    return list(w2id.keys()),w2id,id2w,counts
 
 #sent=sentences(corpus)
+#vocab,w2id,id2w,counts=tokenisation(sent)
 
-#vocab,w2id,id2w=tokenisation(sent)
+def build_noise(count,alpha=0.75):
+    noise= count**alpha
+    noise_dist=noise/noise.sum()
+    return noise_dist
 
-
-def pair(s,w):
+def pair(s,w,w2id):
     """Création des pairs (center,context) poir 1 phrase"""
     p=[]
     for word in range(len(s)):
@@ -66,13 +73,13 @@ def pair(s,w):
             k=c-i
             if k<0:
                 break
-            p.append((s[word],s[k]))
+            p.append((   w2id[s[word]],  w2id[s[k]]))
         #fen ->
         for j in range(1,w+1):
             k=c+j
             if k >=len(s):
                  break
-            p.append((s[word],s[k]))
+            p.append((  w2id[s[word]] ,w2id[s[k]]   ))
     return p
 
 def pairs(sent,w):
@@ -83,5 +90,6 @@ def pairs(sent,w):
     return p
 
 #print(pairs(sent,2)[:5])
+
 
 
