@@ -46,23 +46,20 @@ def sentences(corpus):
 
 
 
-def tokenisation(sent):
+def tokenisation(sent,min_count=3):
     """On prend une phrase et on renvoie la tokenisation totale (vocab) + w2id et id2w"""
-    token=set()
-    w2id={}
-    id2w={}
-    i=0
     counter=Counter()
     for s in sent:
         counter.update(s)
-        for word in s:
-            if word not in token:
-                token.add(word)
-                w2id[word]=i
-                id2w[i]=word
-                i=i+1
-    counts = [counter[word] for word in w2id]
-    return list(w2id.keys()),w2id,id2w,counts
+
+    vocab = [w for w in counter if counter[w] >= min_count]
+    w2id = {w: i for i, w in enumerate(vocab)}
+    id2w = {i: w for w, i in w2id.items()}
+
+    counts = [counter[w] for w in vocab]
+
+    return vocab,w2id,id2w,counts
+
 
 def build_noise(count,alpha=0.75):
     noise= count**alpha
@@ -91,6 +88,8 @@ def pair(s,w,w2id):
 def filtre_s(s, w2id, freq_rel, t_s):
     filtered = []
     for w in s:
+        if w not in w2id:
+            continue
         f = freq_rel[w2id[w]]          # fréquence relative du mot
         P_drop = 1 - t_s/np.sqrt(f)  # proba de discard
         
@@ -122,7 +121,7 @@ def load_data(max_sentences=None):
     if max_sentences is not None:
         sent = sent[:max_sentences]
 
-    vocab, w2id, id2w, counts = tokenisation(sent)
+    vocab, w2id, id2w, counts = tokenisation(sent,min_count=3)
     return sent, vocab, w2id, id2w, counts
 """
 sent=sentences(corpus)

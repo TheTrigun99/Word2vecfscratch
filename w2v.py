@@ -3,14 +3,17 @@
 import numpy as np
 def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
+
+
+
 #ici on fait du negativ sampling skip-gram
 class Word2Vec:
     def __init__(self, vocab_size, embed_dim,neg_dist,K):
         self.vocab_size = vocab_size
         self.embed_dim = embed_dim
         self.neg_dist=neg_dist
-        self.W_in = np.random.randn(vocab_size, embed_dim)
-        self.W_out = np.random.randn(vocab_size, embed_dim)
+        self.W_in = np.random.randn(vocab_size, embed_dim).astype(np.float32)
+        self.W_out = np.random.randn(vocab_size, embed_dim).astype(np.float32)
         self.K=K
     def forward(self, center_id):
         x = np.zeros(self.vocab_size)
@@ -36,14 +39,16 @@ class Word2Vec:
         return pos_loss + neg_loss
 
     def train(self, pairs, lr, epochs, progress=False):
+        total_steps = epochs * len(pairs)
+        step_counter = 0
         for epoch in range(epochs):
             if progress:
                 total = len(pairs)
-                step = max(1, total // 50)  # update  tous les 2%
+                progress_step = max(1, total // 50)  # update tous les ~2%
                 print(f"Epoch {epoch+1}/{epochs}")
 
             for idx, (center_id,context_id) in enumerate(pairs):
-                
+                lr_t = lr * max(0.0, 1 - step_counter / total_steps)
                 #vecteurs center et context
                 v_c = self.W_in[center_id]
                 v_o = self.W_out[context_id]
@@ -61,14 +66,15 @@ class Word2Vec:
                 grad_o= (sigmoid(pos)-1)*v_c
                 grad_negs = sigmoid(neg)[:, None] * v_c[None, :]
 
-                
-                self.W_in[center_id]      -= lr * grad_c
-                self.W_out[context_id]    -= lr * grad_o
-                self.W_out[neg_ids]       -= lr * grad_negs
 
-                if progress and (idx + 1) % step == 0:
+                self.W_in[center_id]      -= lr_t * grad_c
+                self.W_out[context_id]    -= lr_t * grad_o
+                self.W_out[neg_ids]       -= lr_t * grad_negs
+                step_counter += 1
+
+                if progress and (idx + 1) % progress_step == 0:
                     pct = 100.0 * (idx + 1) / total
-                    print(f"\r  {idx+1}/{total} ({pct:5.1f}%)", end="")
+                    print(f"\r  {idx+1}/{total} ({pct:5.1f}%)", end="", flush=True)
 
             if progress:
                 print("\r  done".ljust(24))
