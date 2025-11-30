@@ -1,10 +1,4 @@
-class Word2VecDataset:
-    def __init__(self, pairs):
-        self.pairs = pairs
-    def __len__(self):
-        return len(self.pairs)
-    def __getitem__(self, i):
-        return self.pairs[i]
+
 
 import numpy as np
 def sigmoid(x):
@@ -41,9 +35,14 @@ class Word2Vec:
         neg_loss = -np.sum(np.log(sigmoid(-neg_scores)))
         return pos_loss + neg_loss
 
-    def train(self, pairs, lr, epochs):
+    def train(self, pairs, lr, epochs, progress=False):
         for epoch in range(epochs):
-            for center_id,context_id in pairs:
+            if progress:
+                total = len(pairs)
+                step = max(1, total // 50)  # update  tous les 2%
+                print(f"Epoch {epoch+1}/{epochs}")
+
+            for idx, (center_id,context_id) in enumerate(pairs):
                 
                 #vecteurs center et context
                 v_c = self.W_in[center_id]
@@ -58,14 +57,21 @@ class Word2Vec:
                 neg = neg_vecs.dot(v_c)
 
                 #calcul des gradients
-                grad_c= ( sigmoid(pos)-1 )*v_o + np.sum(    sigmoid(neg)[:, None] *  neg_vecs ,axis=0    )
+                grad_c= ( sigmoid(pos)-1 )*v_o + np.sum(    sigmoid(neg)[:, None] *  neg_vecs ,axis=0 )
                 grad_o= (sigmoid(pos)-1)*v_c
-                grad_negs=sigmoid(neg)[:, None]*neg_vecs
+                grad_negs = sigmoid(neg)[:, None] * v_c[None, :]
+
+                
                 self.W_in[center_id]      -= lr * grad_c
                 self.W_out[context_id]    -= lr * grad_o
                 self.W_out[neg_ids]       -= lr * grad_negs
-            
 
+                if progress and (idx + 1) % step == 0:
+                    pct = 100.0 * (idx + 1) / total
+                    print(f"\r  {idx+1}/{total} ({pct:5.1f}%)", end="")
+
+            if progress:
+                print("\r  done".ljust(24))
 
         return
 

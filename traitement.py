@@ -3,14 +3,18 @@ import re
 from collections import Counter
 import random as rd
 import numpy as np
-data = load_dataset("wikitext", "wikitext-2-raw-v1")
-train = data["train"]["text"]
-valid = data["validation"]["text"]
-test = data["test"]["text"]
-print(test[0])
 
-corpus = "\n".join(train)
 
+def load_corpus():
+    data = load_dataset("wikitext", "wikitext-2-raw-v1")
+    train = data["train"]["text"]
+    return "\n".join(train)
+
+def build_sentences(corpus):
+    return sentences(corpus)
+
+def build_vocab(sent):
+    return tokenisation(sent)
 
 
 def sentences(corpus):
@@ -25,7 +29,6 @@ def sentences(corpus):
     #on coupe sur les points "." mais on ne les garde pas (sinon problématique pour tokeniser après)
     sentences = []
     current = []
-
     for tok in raw_tokens:
         if tok == ".":
             if current:
@@ -39,6 +42,10 @@ def sentences(corpus):
 
     return sentences
 #TODO: Mettre sentences directement en ids
+
+
+
+
 def tokenisation(sent):
     """On prend une phrase et on renvoie la tokenisation totale (vocab) + w2id et id2w"""
     token=set()
@@ -56,9 +63,6 @@ def tokenisation(sent):
                 i=i+1
     counts = [counter[word] for word in w2id]
     return list(w2id.keys()),w2id,id2w,counts
-
-sent=sentences(corpus)
-vocab,w2id,id2w,counts=tokenisation(sent)
 
 def build_noise(count,alpha=0.75):
     noise= count**alpha
@@ -95,7 +99,7 @@ def filtre_s(s, w2id, freq_rel, t_s):
 
     return filtered
 
-def pairs(sent,w,w2id,counts,t=1e-5):  #t est un paramètres ultra sensible (j'ai essayé plusieurs valeurs et 1e-5 est pas mal)
+def pairs(sent,w,w2id,counts,t=1e-5):  #t est un paramètres ultra sensible (j'ai essayé plusieurs valeurs et 1e-5 est en effet correct comme cité ds le papier)
     """On crée les pair (center,context) qui nous servent de données de training""" 
     p=[]
     total = sum(counts)
@@ -107,7 +111,23 @@ def pairs(sent,w,w2id,counts,t=1e-5):  #t est un paramètres ultra sensible (j'a
     
     return p
 
-"""total = sum(counts)
+
+def load_data(max_sentences=None):
+    """Charge wikitext-2 et prépare les phrases/vocabulaire de façon paresseuse."""
+    data = load_dataset("wikitext", "wikitext-2-raw-v1")
+    train = data["train"]["text"]
+    corpus = "\n".join(train)
+    sent = sentences(corpus)
+
+    if max_sentences is not None:
+        sent = sent[:max_sentences]
+
+    vocab, w2id, id2w, counts = tokenisation(sent)
+    return sent, vocab, w2id, id2w, counts
+"""
+sent=sentences(corpus)
+vocab,w2id,id2w,counts=tokenisation(sent)
+total = sum(counts)
 print(total)
 f_rel = [c / total for c in counts]
 for w in ['valkyria', 'chronicles', 'iii', 'senj', 'no', 'valkyria', 'unrecorded', 'chronicles', 'japanese', 'lit']:
