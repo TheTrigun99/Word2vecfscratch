@@ -36,12 +36,36 @@ class Word2Vec:
         # Négatifs, ici on veut sigmoid(neg_vecs t* v_c)=0 ie les vecteurs sont orthogonaux et du coup indépendant et du coup ils sont éloignés 
         neg_ids = np.random.choice(self.vocab_size, size=self.K, p=self.neg_dist)
         neg_vecs = self.W_out[neg_ids]             
-        neg_scores = neg_vecs.dot(v_c)              
+        neg_scores = np.dot(neg_vecs,v_c)              
 
         neg_loss = -np.sum(np.log(sigmoid(-neg_scores)))
         return pos_loss + neg_loss
 
     def train(self, pairs, lr, epochs):
+        for epoch in range(epochs):
+            for center_id,context_id in pairs:
+                
+                #vecteurs center et context
+                v_c = self.W_in[center_id]
+                v_o = self.W_out[context_id]
+
+                #vecteurs négatifs
+                neg_ids=np.random.choice(self.vocab_size, size=self.K, p=self.neg_dist)
+                neg_vecs=self.W_out[neg_ids]
+                
+                #score
+                pos = np.dot(v_c, v_o)           # scalaire
+                neg = neg_vecs.dot(v_c)
+
+                #calcul des gradients
+                grad_c= ( sigmoid(pos)-1 )*v_o + np.sum(    sigmoid(neg)[:, None] *  neg_vecs ,axis=0    )
+                grad_o= (sigmoid(pos)-1)*v_c
+                grad_negs=sigmoid(neg)[:, None]*neg_vecs
+                self.W_in[center_id]      -= lr * grad_c
+                self.W_out[context_id]    -= lr * grad_o
+                self.W_out[neg_ids]       -= lr * grad_negs
+            
+
 
         return
 
