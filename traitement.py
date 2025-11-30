@@ -38,7 +38,7 @@ def sentences(corpus):
         sentences.append(current)
 
     return sentences
-
+#TODO: Mettre sentences directement en ids
 def tokenisation(sent):
     """On prend une phrase et on renvoie la tokenisation totale (vocab) + w2id et id2w"""
     token=set()
@@ -81,7 +81,7 @@ def pair(s,w,w2id):
             k=c+j
             if k >=len(s):
                  break
-            p.append((  w2id[s[word]] ,w2id[s[k]]   ))
+            p.append((  w2id[s[word]] ,w2id[s[k]] ))
     return p
 
 def filtre_s(s, w2id, freq_rel, t_s):
@@ -95,8 +95,8 @@ def filtre_s(s, w2id, freq_rel, t_s):
 
     return filtered
 
-def pairs(sent,w,w2id,counts,t=1e-5):
-    """On crée les pair (center,context) qui nous servent de données de training"""
+def pairs(sent,w,w2id,counts,t=1e-5):  #t est un paramètres ultra sensible (j'ai essayé plusieurs valeurs et 1e-5 est pas mal)
+    """On crée les pair (center,context) qui nous servent de données de training""" 
     p=[]
     total = sum(counts)
     freq_rel = [c / total for c in counts]
@@ -107,15 +107,16 @@ def pairs(sent,w,w2id,counts,t=1e-5):
     
     return p
 
-total = sum(counts)
+"""total = sum(counts)
+print(total)
 f_rel = [c / total for c in counts]
 for w in ['valkyria', 'chronicles', 'iii', 'senj', 'no', 'valkyria', 'unrecorded', 'chronicles', 'japanese', 'lit']:
     f = f_rel[w2id[w]]
     print(counts[w2id[w]])
-    print(w, f, "P_drop =", 1 - np.sqrt(1e-5 / f))
+    print(w, f, "P_drop =", 1 - np.sqrt(1e-5 / f)) 
 
 print(pairs(sent,2,w2id,counts)[:10])
-print(sent[0])
+print(sent[0])"""
 
 
 
