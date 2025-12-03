@@ -8,8 +8,8 @@ def prepare_data(window_size=2, max_pairs=20000, max_sentences=None):
     # Import paresseux pour éviter le coût à l'import.
     import traitement as tr
 
-    sent, vocab, w2id, id2w, counts = tr.load_data(max_sentences=max_sentences)
-    all_pairs = tr.pairs(sent, window_size, w2id, counts)
+    sent, vocab, w2id, id2w, counts,f_relg = tr.load_data(max_sentences=max_sentences)
+    all_pairs = tr.pairs(sent, window_size, w2id, f_relg,id2w)
 
     if max_pairs and len(all_pairs) > max_pairs:
         rng = np.random.default_rng(0)
@@ -19,14 +19,13 @@ def prepare_data(window_size=2, max_pairs=20000, max_sentences=None):
     noise_dist = tr.build_noise(np.array(counts))
     return all_pairs, noise_dist, vocab, w2id, id2w
 
-
 def main():
-    window_size = 2
-    embed_dim = 50
+    window_size = 3
+    embed_dim = 300
     negatives = 5
-    lr = 0.04
-    epochs = 8
-    max_pairs = 20000000
+    lr =0.025
+    epochs = 5
+    max_pairs = 1318950
     max_sentences = None  # mettre None pour tout le dataset
 
     print("Preparing data from WikiText-2...")

@@ -6,6 +6,6 @@ def one_hot_encode(id, vocab_size):
 import numpy as np
 
 A = np.random.randn(3, 5)
-b = np.random.randn(5)
+b = np.zeros((2,2))
 
-print(A.dot(b))
+print(b)

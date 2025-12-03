@@ -18,28 +18,28 @@ def build_vocab(sent):
 
 
 def sentences(corpus):
-    """on nettoie le texte et on extrait les phrases du dataset"""
-    text = corpus.lower() #on met tout en minuscule (word2vec s'en fout des maj)
-    text = re.sub(r"<unk>", " ", text)
-    text = re.sub(r"[^a-z0-9.\s]", " ", text)   # on garde uniquement . + lettres + chiffres
+    # Lowercase
+    text = corpus.lower()
 
-    #tokenisation anglaise 
-    raw_tokens = re.findall(r"[a-z]+(?:'[a-z]+)?|\.", text)
+    # Keep common punctuation . , ! ? : ; ' -
+    # Remove only exotic characters
+    text = re.sub(r"[^a-z0-9.,!?;:'\-()\s]", " ", text)
 
-    #on coupe sur les points "." mais on ne les garde pas (sinon problématique pour tokeniser après)
+    # Tokenize words + punctuation
+    tokens = re.findall(r"[a-z0-9]+(?:'[a-z0-9]+)?|[.,!?;:()\-]", text)
+
+    # Split on . ! ?
     sentences = []
     current = []
-    for tok in raw_tokens:
-        if tok == ".":
+    for tok in tokens:
+        if tok in {".", "!", "?"}:
             if current:
                 sentences.append(current)
                 current = []
         else:
             current.append(tok)
-
-    if current:   #au cas où si j'ai juste un texte avec aucun points
+    if current:
         sentences.append(current)
-
     return sentences
 #TODO: Mettre sentences directement en ids
 
@@ -57,8 +57,11 @@ def tokenisation(sent,min_count=3):
     id2w = {i: w for w, i in w2id.items()}
 
     counts = [counter[w] for w in vocab]
-
-    return vocab,w2id,id2w,counts
+    total = sum(counts)
+    f_relg = np.array([c / total for c in counts], dtype=float)
+    for wo in ["king","queen","emperor","throne","lord","henry","george","prince","monarch"]:
+        print(wo, counter[wo])
+    return vocab,w2id,id2w,counts,f_relg
 
 
 def build_noise(count,alpha=0.75):
@@ -66,48 +69,66 @@ def build_noise(count,alpha=0.75):
     noise_dist=noise/noise.sum()
     return noise_dist
 
-def pair(s,w,w2id):
-    """Création des pairs (center,context) poir 1 phrase"""
-    p=[]
+def pair(s, w, w2id):
+    """Création des pairs (center,context) pour 1 phrase avec fenêtre dynamique."""
+    p = []
     for word in range(len(s)):
-        c=word
-        #fen <-
-        for i in range(1,w+1):
-            k=c-i
-            if k<0:
+        c = word
+        # fenêtre tirée aléatoirement dans [1, w]
+        w_cur = rd.randint(1, w)
+        # fen <-
+        for i in range(1, w_cur + 1):
+            k = c - i
+            if k < 0:
                 break
-            p.append((   w2id[s[word]],  w2id[s[k]]))
-        #fen ->
-        for j in range(1,w+1):
-            k=c+j
-            if k >=len(s):
-                 break
-            p.append((  w2id[s[word]] ,w2id[s[k]] ))
+            p.append((w2id[s[word]], w2id[s[k]]))
+        # fen ->
+        for j in range(1, w_cur + 1):
+            k = c + j
+            if k >= len(s):
+                break
+            p.append((w2id[s[word]], w2id[s[k]]))
     return p
 
-def filtre_s(s, w2id, freq_rel, t_s):
+def filtre_s(s, w2id, f_relg, t_s, drop_counter=None):
     filtered = []
     for w in s:
         if w not in w2id:
             continue
-        f = freq_rel[w2id[w]]          # fréquence relative du mot
-        P_drop = 1 - t_s/np.sqrt(f)  # proba de discard
+        f = f_relg[w2id[w]]          # fréquence relative du mot
+        P_keep = min((np.sqrt(f/t_s) + 1) * t_s/f, 1)  # proba de discard
         
-        if rd.random() > P_drop:   # on garde le mot
+        if rd.random()< P_keep:   # on garde le mot
             filtered.append(w)
+        elif drop_counter is not None:
+            drop_counter[w] += 1
 
     return filtered
 
-def pairs(sent,w,w2id,counts,t=1e-5):  #t est un paramètres ultra sensible (j'ai essayé plusieurs valeurs et 1e-5 est en effet correct comme cité ds le papier)
+def pairs(sent,w,w2id,f_relg,id2w,t=1e-3):  #t est un paramètres ultra sensible (j'ai essayé plusieurs valeurs et 1e-5 est en effet correct comme cité ds le papier)
     """On crée les pair (center,context) qui nous servent de données de training""" 
     p=[]
-    total = sum(counts)
-    freq_rel = [c / total for c in counts]
-    t_s=np.sqrt(t)
+    t_s=t
+    drop_counter = Counter()
+    kept_tokens = 0
     for s in sent:
-        s_filt=filtre_s(s, w2id, freq_rel, t_s)
+        s_filt=filtre_s(s, w2id, f_relg, t_s, drop_counter=drop_counter)
+        kept_tokens += len(s_filt)
         p.extend(pair(s_filt,w,w2id))
-    
+    dropped_tokens = sum(drop_counter.values())
+    if dropped_tokens:
+        print(f"Subsampling: kept {kept_tokens} tokens, dropped {dropped_tokens} tokens.")
+        top_dropped = drop_counter.most_common(20)
+        print("Top dropped words:", top_dropped)
+    # après avoir construit pairs
+    cnt_ctx = Counter()
+    if "king" in w2id:
+        kid = w2id["paris"]
+        for c, ctx in p:
+            if c == kid:
+                cnt_ctx[ctx] += 1
+        print("Contexts for 'paris' (after subsampling):")
+        print([(id2w[i], n) for i, n in cnt_ctx.most_common(20)])
     return p
 
 
@@ -121,8 +142,8 @@ def load_data(max_sentences=None):
     if max_sentences is not None:
         sent = sent[:max_sentences]
 
-    vocab, w2id, id2w, counts = tokenisation(sent,min_count=3)
-    return sent, vocab, w2id, id2w, counts
+    vocab, w2id, id2w, counts,f_relg = tokenisation(sent,min_count=3)
+    return sent, vocab, w2id, id2w, counts,f_relg
 """
 sent=sentences(corpus)
 vocab,w2id,id2w,counts=tokenisation(sent)
