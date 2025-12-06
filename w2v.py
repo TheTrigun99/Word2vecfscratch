@@ -68,7 +68,7 @@ class Word2Vec:
         total_steps = len(pairs) * epochs
         step_counter = 0
         rng = np.random.default_rng(0)
-        min_lr=1e-4
+        min_lr=1e-4 #valeur copiée de Gensim 
         for epoch in range(epochs):
             rng.shuffle(pairs)
             if progress:
@@ -78,7 +78,7 @@ class Word2Vec:
 
             for idx, (center_id, context_id) in enumerate(pairs):
                 # décroissance linéaire du LR
-                progress_frac = step_counter / total_steps  # entre 0 et 1
+                progress_frac = step_counter / total_steps  
                 lr_t = lr * (1-progress_frac)
                 if lr_t < min_lr:
                     lr_t = min_lr
@@ -92,13 +92,13 @@ class Word2Vec:
                 
 
                 pos = np.dot(v_c, v_o)
-                pos = np.clip(pos, -10, 10)
+                pos = np.clip(pos, -10, 10) ##on clip pour garder de la convergence, 10 -10 c'est suffisant pour les sigmoid
 
                 neg = neg_vecs.dot(v_c)
-                neg = np.clip(neg, -10, 10)
+                neg = np.clip(neg, -10, 10) #on clip pour garder de la convergence, 10 -10 c'est suffisant pour les sigmoid
                 # scores
-                #pos = np.dot(v_c, v_o)       # scalar
-                #neg = neg_vecs.dot(v_c)      # (K,)
+                #pos = np.dot(v_c, v_o)       
+                #neg = neg_vecs.dot(v_c)      
 
                 # gradients
                 sig_pos = sigmoid(pos)

@@ -28,11 +28,11 @@ def load_sentences():
 def train_gensim_w2v(sentences):
     return Word2Vec(
         sentences=sentences,
-        vector_size=100,
+        vector_size=300,
         window=3,
         min_count=3,
         sg=1,  # skip-gram
-        negative=8,  # negative sampling
+        negative=5,  # negative sampling
         hs=0,
         sample=1e-3,
         workers=os.cpu_count() or 1,

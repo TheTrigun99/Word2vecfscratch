@@ -1,6 +1,8 @@
 #Word2vec Skip-Gram negativ samples from scratch
 
-Implémentation from scratch (sans gensim et sans pytorch de w2v skip*gram negativ samples.
+Implémentation from scratch sans gensim et sans pytorch de w2v skip*gram negativ samples.
+
+
 Top neighbors with normalized W_in for 'king':
 henry   0.7735
 william 0.7537
@@ -49,6 +51,7 @@ queen: [ 0.15040387 -0.00734318 -0.02329289 -0.09677064 -0.10576637]
 
 
 football :
+
 championship    0.8472
 cup     0.8328
 rugby   0.8279
