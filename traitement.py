@@ -18,10 +18,9 @@ def build_vocab(sent):
 
 
 def sentences(corpus):
+    """ We extract sentences from the corpus delimited by "?" , "." and "!" """
     # Lowercase
     text = corpus.lower()
-
-    # Keep common punctuation . , ! ? : ; ' -
     # Remove only exotic characters
     text = re.sub(r"[^a-z0-9.,!?;:'\-()\s]", " ", text)
 
@@ -47,7 +46,7 @@ def sentences(corpus):
 
 
 def tokenisation(sent,min_count=3):
-    """On prend une phrase et on renvoie la tokenisation totale (vocab) + w2id et id2w"""
+    """We take a sentence and return the total tokenisation (vocab) + w2id et id2w"""
     counter=Counter()
     for s in sent:
         counter.update(s)
@@ -59,18 +58,17 @@ def tokenisation(sent,min_count=3):
     counts = [counter[w] for w in vocab]
     total = sum(counts)
     f_relg = np.array([c / total for c in counts], dtype=float)
-    for wo in ["king","queen","emperor","throne","lord","henry","george","prince","monarch"]:
-        print(wo, counter[wo])
     return vocab,w2id,id2w,counts,f_relg
 
 
 def build_noise(count,alpha=0.75):
+    """Making the unigram distribution """
     noise= count**alpha
     noise_dist=noise/noise.sum()
     return noise_dist
 
 def pair(s, w, w2id):
-    """Création des pairs (center,context) pour 1 phrase avec fenêtre dynamique."""
+    """Creation of pairs (center,context) for 1 sentence with dynamique window (random)."""
     p = []
     for word in range(len(s)):
         c = word
@@ -91,6 +89,7 @@ def pair(s, w, w2id):
     return p
 
 def filtre_s(s, w2id, f_relg, t_s, drop_counter=None):
+    """Subsampling"""
     filtered = []
     for w in s:
         if w not in w2id:
@@ -105,8 +104,8 @@ def filtre_s(s, w2id, f_relg, t_s, drop_counter=None):
 
     return filtered
 
-def pairs(sent,w,w2id,f_relg,id2w,t=1e-3):  #t est un paramètres ultra sensible (j'ai essayé plusieurs valeurs et 1e-5 est en effet correct comme cité ds le papier)
-    """On crée les pair (center,context) qui nous servent de données de training""" 
+def pairs(sent,w,w2id,f_relg,id2w,t=1e-3):  #t is a sensible parameter
+    """We create the pairs (center,context) that will be our training samples""" 
     p=[]
     t_s=t
     drop_counter = Counter()
@@ -120,9 +119,9 @@ def pairs(sent,w,w2id,f_relg,id2w,t=1e-3):  #t est un paramètres ultra sensible
         print(f"Subsampling: kept {kept_tokens} tokens, dropped {dropped_tokens} tokens.")
         top_dropped = drop_counter.most_common(20)
         print("Top dropped words:", top_dropped)
-    # après avoir construit pairs
+    # to see what pairs our model dropped the most
     cnt_ctx = Counter()
-    if "king" in w2id:
+    if "paris" in w2id:
         kid = w2id["paris"]
         for c, ctx in p:
             if c == kid:
@@ -133,7 +132,7 @@ def pairs(sent,w,w2id,f_relg,id2w,t=1e-3):  #t est un paramètres ultra sensible
 
 
 def load_data(max_sentences=None):
-    """Charge wikitext-2 et prépare les phrases/vocabulaire de façon paresseuse."""
+    """load wikitext-2 and prepare the vocab/sentences ."""
     data = load_dataset("wikitext", "wikitext-2-raw-v1")
     train = data["train"]["text"]
     corpus = "\n".join(train)
