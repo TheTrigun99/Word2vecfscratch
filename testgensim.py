@@ -75,7 +75,7 @@ def main():
         print(f"  {word}\t{sim:.4f}")
 
     print("\nTop 10 neighbors of 'king':")
-    for word, sim in model.wv.most_similar("paris", topn=30):
+    for word, sim in model.wv.most_similar("football", topn=30):
         print(f"  {word}\t{sim:.4f}")
 
 

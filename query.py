@@ -10,25 +10,6 @@ def load_model(path="w2v_model.npz"):
     id2w = data["id2w"].item()
     return W_in, W_out, vocab, w2id, id2w
 
-
-def combined_embeddings(W_in, W_out):
-    """Combine W_in and W_out then L2-normalize row-wise."""
-    V = W_in + W_out
-    norms = np.linalg.norm(V, axis=1, keepdims=True) + 1e-9
-    return V / norms
-
-
-def normalized_embeddings(W_in):
-    """L2-normalize W_in row-wise (gensim-like)."""
-    norms = np.linalg.norm(W_in, axis=1, keepdims=True) + 1e-9
-    return W_in / norms
-
-
-def normalize_both(W_in, W_out):
-    """Return L2-normalized versions of W_in and W_out."""
-    return normalized_embeddings(W_in), normalized_embeddings(W_out)
-
-
 def topk(word, W, w2id, id2w, k=10):
     if word not in w2id:
         return []

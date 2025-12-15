@@ -8,7 +8,6 @@ def build_unigram_table(prob_dist, table_size=10_000_000, seed=42):
     # poids cumulés puis réplication proportionnelle
     # on normalise sur table_size pour éviter les erreurs d'arrondi
     counts = np.rint(prob_dist * table_size).astype(int)
-    # s'assurer que la table ne soit pas vide
     if counts.sum() == 0:
         counts[0] = table_size
     else:
@@ -38,6 +37,7 @@ class Word2Vec:
     
     
     def forward(self, center_id):
+        """not necessary in this code"""
         x = np.zeros(self.vocab_size)
         x[center_id] = 1
 
@@ -46,6 +46,7 @@ class Word2Vec:
         return h #ici on fait pas tout le forward car SGNS on a pas de softmax sur tout l'ouyput
    
     def loss(self, center_id, context_id):
+        """Not necessary in this code"""
         v_c = self.W_in[center_id]
         v_o = self.W_out[context_id]
 
@@ -61,6 +62,7 @@ class Word2Vec:
         return pos_loss + neg_loss
     
     def sample_negatives(self, size, rng):
+        """taking negativ samples"""
         idx = rng.integers(0, len(self.neg_table), size=size)
         return self.neg_table[idx]
     
@@ -92,14 +94,10 @@ class Word2Vec:
                 
 
                 pos = np.dot(v_c, v_o)
-                pos = np.clip(pos, -10, 10) ##on clip pour garder de la convergence, 10 -10 c'est suffisant pour les sigmoid
+                pos = np.clip(pos, -10, 10) #we clip to keep convergence, 10 -10 is suffisant for the sigmoid
 
                 neg = neg_vecs.dot(v_c)
-                neg = np.clip(neg, -10, 10) #on clip pour garder de la convergence, 10 -10 c'est suffisant pour les sigmoid
-                # scores
-                #pos = np.dot(v_c, v_o)       
-                #neg = neg_vecs.dot(v_c)      
-
+                neg = np.clip(neg, -10, 10) #we clip to keep convergence, 10 -10 is suffisant for the sigmoidut
                 # gradients
                 sig_pos = sigmoid(pos)
                 sig_neg = sigmoid(neg)
