@@ -3,10 +3,7 @@ def sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
 
 def build_unigram_table(prob_dist, table_size=10_000_000, seed=42):
-    # prob_dist: array de taille vocab, somme = 1
     rng = np.random.default_rng(seed)
-    # poids cumulés puis réplication proportionnelle
-    # on normalise sur table_size pour éviter les erreurs d'arrondi
     counts = np.rint(prob_dist * table_size).astype(int)
     if counts.sum() == 0:
         counts[0] = table_size
@@ -16,7 +13,7 @@ def build_unigram_table(prob_dist, table_size=10_000_000, seed=42):
         if diff > 0:
             counts[np.argmax(prob_dist)] += diff
         elif diff < 0:
-            counts[np.argmax(counts)] += diff  # diff est négatif
+            counts[np.argmax(counts)] += diff  # diff is negativ
     # construire la table
     table = np.repeat(np.arange(len(prob_dist)), counts)
     rng.shuffle(table)
@@ -53,7 +50,7 @@ class Word2Vec:
         # Positiv, on want that sigmoid(v_o t * v_c)= 1
         pos_loss = -np.log(sigmoid(np.dot(v_c, v_o)))
 
-        # Négatifs, ici on veut sigmoid(neg_vecs t* v_c)=0 ie les vecteurs sont orthogonaux et du coup indépendant et du coup ils sont éloignés 
+        # Negativ, here we want sigmoid(neg_vecs t* v_c)=0 ie vectors are orthogonals and thus independant 
         neg_ids = self.sample_negatives(self.K, rng)
         neg_vecs = self.W_out[neg_ids]             
         neg_scores = np.dot(neg_vecs,v_c)              
@@ -70,12 +67,12 @@ class Word2Vec:
         total_steps = len(pairs) * epochs
         step_counter = 0
         rng = np.random.default_rng(0)
-        min_lr=1e-4 #valeur copiée de Gensim 
+        min_lr=1e-4 
         for epoch in range(epochs):
             rng.shuffle(pairs)
             if progress:
                 total = len(pairs)
-                progress_step = max(1, total // 50)  # update every ~2%
+                progress_step = max(1, total // 50)  
                 print(f"Epoch {epoch+1}/{epochs}")
 
             for idx, (center_id, context_id) in enumerate(pairs):

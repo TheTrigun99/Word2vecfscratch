@@ -94,10 +94,10 @@ def filtre_s(s, w2id, f_relg, t_s, drop_counter=None):
     for w in s:
         if w not in w2id:
             continue
-        f = f_relg[w2id[w]]          # fréquence relative du mot
-        P_keep = min((np.sqrt(f/t_s) + 1) * t_s/f, 1)  # proba de discard
+        f = f_relg[w2id[w]]          # relativ frequence of the word
+        P_keep = min((np.sqrt(f/t_s) + 1) * t_s/f, 1)  # proba of keeping the word
         
-        if rd.random()< P_keep:   # on garde le mot
+        if rd.random()< P_keep:   # we keep the word
             filtered.append(w)
         elif drop_counter is not None:
             drop_counter[w] += 1

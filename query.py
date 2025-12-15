@@ -17,7 +17,7 @@ def topk(word, W, w2id, id2w, k=10):
     # Normalisation L2
     vn = vec / (np.linalg.norm(vec) + 1e-9)
     scores = W @ vn
-    scores[w2id[word]] = -1e9  # �viter le mot lui-m�me
+    scores[w2id[word]] = -1e9  
     idx = np.argpartition(-scores, k)[:k]
     idx = idx[np.argsort(-scores[idx])]
     return [(id2w[i], float(scores[i])) for i in idx]

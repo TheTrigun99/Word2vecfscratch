@@ -5,7 +5,6 @@ from w2v import Word2Vec
 
 def prepare_data(window_size=2, max_pairs=20000, max_sentences=None):
     """Charge les données wikitext, construit les paires et renvoie la distribution de bruit."""
-    # Import paresseux pour éviter le coût à l'import.
     import traitement as tr
 
     sent, vocab, w2id, id2w, counts,f_relg = tr.load_data(max_sentences=max_sentences)
@@ -26,7 +25,7 @@ def main():
     lr =0.025
     epochs = 5
     max_pairs = 1318950
-    max_sentences = None  # mettre None pour tout le dataset
+    max_sentences = None  #put None for all the dataset
 
     print("Preparing data from WikiText-2...")
     pairs, noise_dist, vocab, w2id, id2w = prepare_data(
@@ -54,7 +53,7 @@ def main():
         else:
             print(f"{word}: not in vocabulary")
 
-    # Sauvegarde du modèle et des mappings pour interrogation ultérieure
+    # Save model
     np.savez(
         "w2v_model.npz",
         W_in=model.W_in,
@@ -65,7 +64,7 @@ def main():
     )
     print("Model saved to w2v_model.npz")
 
-    # Test analogie : king - man + woman ≈ queen
+    # analogy test : king - man + woman ≈ queen
     needed = ["king", "man", "woman", "queen"]
     if all(w in w2id for w in needed):
         vk = model.W_in[w2id["king"]]
